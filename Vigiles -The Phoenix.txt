@@ -173,6 +173,10 @@ def workload_check(x, origem):
         print("----------------------------------------")
 
 def auto_fill(x):
+    D = ['Data de Nascimento:','Data de Formatura do Treinamento:']
+    for i in D: #Formatação das datas
+        x[i] = pd.to_datetime(x[i], errors='coerce')
+        x[i] = x[i].dt.strftime('%d%m%Y')
     os.system('PAUSE')
     name = ['CPF:',
         'Nome Completo:',
@@ -186,7 +190,8 @@ def auto_fill(x):
 
     pg.hotkey('alt','tab')
     for i in range(0,len(x["Nome Completo:"])):
-        pg.press('tab', presses = 10 + 1)
+        for _ in range(0,11):
+            pg.press('tab')
         pg.press('enter')
 
         for j in name:
@@ -194,10 +199,11 @@ def auto_fill(x):
             if j == "Carga Horária:":
                 t = ['4h','8h','24h'].index(x['Carga Horária:'][i])
                 pg.press('down', presses = t + 1)
+                pg.press('tab')                 
             elif str(x[j][i]) != 'nan':
                 pg.write(str(x[j][i]))
 
-        pg.press('tab', presses = 2)
+        pg.press('tab'  )
         pg.press('enter')
 
         t = 2
@@ -205,7 +211,8 @@ def auto_fill(x):
         pg.press('enter')
         time.sleep(t)
         pg.press('enter')
-     
+
+
     pg.hotkey('alt','tab')
 
 main(0)
