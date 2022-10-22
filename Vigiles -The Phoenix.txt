@@ -12,6 +12,7 @@ def main(location):
     CPF_check(data, location)
     date_check(data,location)
     workload_check(data, location)
+    replication_check(data, location)
     auto_fill(data)
 
 def get_archive(arquivo):
@@ -24,34 +25,6 @@ def get_archive(arquivo):
     else:
         x = pd.read_excel(origem, engine = 'openpyxl', dtype = str)
         return x, origem
-
-def existencia_check(x, origem):
-    obrigatorio = ["CPF:",
-                   "Nome Completo:",
-                   "Data de Nascimento:",
-                   "Data de Formatura do Treinamento:",
-                   "Carga Horária:"]
-    
-    n = 0 #Contador de erro
-    for j in obrigatorio:
-        error = []
-        for i in range(0,len(x["Nome Completo:"])):
-            if str(x[j][i]) == "nan":
-                error.append(i)
-        if len(error) != 0:
-            print(str(j)[:-1],"inexistente para os seguintes brigadistas:")
-            for i in error:
-                print(x["Nome Completo:"][i]) 
-            n += 1
-            print("----------------------------------------")
-    if n != 0:
-        print("\nCorrija e pressione'ENTER'")
-        os.system('PAUSE')
-        print()
-        main(origem)
-    else:
-        print("Existência de Dados Obrigatórios: Válido!")
-        print("----------------------------------------")
 
 def header_check(x, origem):
     error = []
@@ -79,6 +52,34 @@ def header_check(x, origem):
     else:
         print("----------------------------------------")
         print("Cabeçalho: Válido!")
+        print("----------------------------------------")
+
+def existencia_check(x, origem):
+    obrigatorio = ["CPF:",
+                   "Nome Completo:",
+                   "Data de Nascimento:",
+                   "Data de Formatura do Treinamento:",
+                   "Carga Horária:"]
+    
+    n = 0 #Contador de erro
+    for j in obrigatorio:
+        error = []
+        for i in range(0,len(x["Nome Completo:"])):
+            if str(x[j][i]) == "nan":
+                error.append(i)
+        if len(error) != 0:
+            print(str(j)[:-1],"inexistente para os seguintes brigadistas:")
+            for i in error:
+                print(x["Nome Completo:"][i]) 
+            n += 1
+            print("----------------------------------------")
+    if n != 0:
+        print("\nCorrija e pressione'ENTER'")
+        os.system('PAUSE')
+        print()
+        main(origem)
+    else:
+        print("Existência de Dados Obrigatórios: Válido!")
         print("----------------------------------------")
 
 def CPF_check(x, origem):
@@ -110,6 +111,7 @@ def CPF_check(x, origem):
         print("CPF divergente para os seguintes brigadistas:")
         for i in error:
             print(x["Nome Completo:"][i])
+        print("Corrija os 'CPF's, salve o arquivo e tente novamente.")
         os.system('PAUSE')
         print()
         main(origem)
@@ -131,6 +133,7 @@ def date_check(x, origem):
         print("\nData de nascimento divergente para os seguintes brigadistas:")
         for i in error:
             print(x["Nome Completo:"][i])
+        print("Corrija as datas de nacimento, salve o arquivo e tente novamente.")
         os.system('PAUSE')
         main(origem)
         print()
@@ -146,6 +149,7 @@ def date_check(x, origem):
         print("\nData de Formatura do Treinamento divergente para os seguintes brigadistas:")
         for i in error:
             print(x["Nome Completo:"][i])
+        print("Corrija as Datas de Formatura, salve o arquivo e tente novamente.")
         os.system('PAUSE')
         print()
         main(origem)
@@ -164,7 +168,7 @@ def workload_check(x, origem):
         print("Carga Horária divergente para os seguintes brigadistas:")
         for i in error:
             print(x["Carga Horária:"][i])
-        print("Corrija os dados de Carga Horária e tente novamente.")
+        print("Corrija os dados de Carga Horária, salve o arquivo e tente novamente.")
         os.system('PAUSE')
         main(origem)
         print()
@@ -172,11 +176,52 @@ def workload_check(x, origem):
         print("Carga Horária: Válido!")
         print("----------------------------------------")
 
+def replication_check(x, origem):
+    duplicate = {}
+    header = ["Endereço de e-mail:",
+          "Nome Completo:",
+          "CPF:",
+          "Telefone Celular:"]
+    for i in header:
+        singular = []
+        error = []
+        for j in x[i]:
+            if j in singular and str(j) != "nan":
+                error.append(j)
+            else:
+                singular.append(j)
+        if len(error) != 0:
+            duplicate[i] = error
+    if duplicate != {}:
+        "----------------------------------------"
+        print("Os seguinte dados estão duplicados:", end = "\n\n")
+        for i in duplicate:
+            print(i)
+            for j in duplicate[i]:
+                print(j)
+            print()
+        
+        print("Corrija os dados duplicados, salve o arquivo e tente novamente.")
+        print("----------------------------------------")
+        os.system('PAUSE')
+        main(origem)
+        print()
+
+    else:
+        pass
+
 def auto_fill(x):
     D = ['Data de Nascimento:','Data de Formatura do Treinamento:']
     for i in D: #Formatação das datas
         x[i] = pd.to_datetime(x[i], errors='coerce')
         x[i] = x[i].dt.strftime('%d%m%Y')
+
+    print("ATENÇÃO!!!!")
+    print("A PRÓXIMA ETAPA PRECISA QUE:")
+    print("O SITE DO BOMBEIRO ESTEJA ABERTO NA PRIMEIRA ABA DO 'ALT' + 'TAB'")
+    print("ESTEJA CADASTRADO EXATAMENTE UM INSTRUTOR")
+    print("NENHUM BOTÃO ESTEJA SELECIONADO")
+    print("CERTIFIQUE-SE QUE OS ITENS ACIMA FORAM CUMPRIDOS E DIGITE 'ENTER'")
     os.system('PAUSE')
     name = ['CPF:',
         'Nome Completo:',
