@@ -4,6 +4,7 @@ import time
 from datetime import datetime as dt
 import os
 from tkinter.filedialog import askopenfilename
+import re
 
 def main(location):
     data, location = get_archive(location)
@@ -83,38 +84,47 @@ def existencia_check(x, origem):
         print("----------------------------------------")
 
 def CPF_check(x, origem):
-    error = []
     count = 0
+    error = []
     for CPF in x["CPF:"]:
-        if len(str(CPF)) != 11:
-            error.append(count)
-        else:
+        conf = re.match("^(\d{3})\.?(\d{3})\.?(\d{3})-?(\d{2})$", CPF)
+        data = ""
+        if conf:
+            for i in conf.groups():
+                data += i
+            #print("Conferindo:", data)
             a = 0
             for i in range(1,10):
-                a = a + i*int(CPF[i-1])
+                a = a + i*int(data[i-1])
             resto = a%11
             if resto == 10:
                 resto = 0
-            if resto != int(CPF[-2]):
+            if resto != int(data[-2]):
                 error.append(count)
             else:
                 a = 0
                 for i in range(0,10):
-                    a = a + i*int(CPF[i])
+                    a = a + i*int(data[i])
                 resto = a%11
                 if resto == 10:
                     resto = 0
-                if resto != int(CPF[-1]):
+                if resto != int(data[-1]):
                     error.append(count)
+        else:
+            error.append(count)
         count += 1
-    if len(error) != 0:
+
+    if len(error) > 0:
         print("CPF divergente para os seguintes brigadistas:")
+
         for i in error:
             print(x["Nome Completo:"][i])
+
         print("Corrija os 'CPF's, salve o arquivo e tente novamente.")
         os.system('PAUSE')
         print()
         main(origem)
+
     else:
         print("Dados de CPF: Válido!")
         print("----------------------------------------")
@@ -260,4 +270,5 @@ def auto_fill(x):
 
     pg.hotkey('alt','tab')
 
-main(0)
+if __name__ == "__main__":
+    main(0)
