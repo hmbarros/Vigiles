@@ -10,8 +10,10 @@ def main(location):
     data, location = get_archive(location)
     header_check(data, location)
     existencia_check(data, location)
+    email_check(data, location)
     CPF_check(data, location)
-    date_check(data,location)
+    date_check(data, location)
+    CEL_check(data, location)
     workload_check(data, location)
     replication_check(data, location)
     auto_fill(data)
@@ -43,10 +45,12 @@ def header_check(x, origem):
         except:
             error.append(i)
     if len(error) != 0:
-        print("Divergência nos seguintes itens do cabeçalho:")
+        print("----------------------------------------")
+        print("Divergência nos seguintes itens do cabeçalho:\n")
         for i in error:
             print(i)
-        print("\nCorrija o cabeçalho e aperte enter.")
+        print("\nCorrija o cabeçalho, salve o arquivo e aperte enter.")
+        print("----------------------------------------")
         os.system('PAUSE')
         print()
         main(origem)
@@ -69,13 +73,13 @@ def existencia_check(x, origem):
             if str(x[j][i]) == "nan":
                 error.append(i)
         if len(error) != 0:
-            print(str(j)[:-1],"inexistente para os seguintes brigadistas:")
+            print(str(j)[:-1],"inexistente para os seguintes brigadistas:\n")
             for i in error:
                 print(x["Nome Completo:"][i]) 
             n += 1
-            print("----------------------------------------")
+
     if n != 0:
-        print("\nCorrija e pressione'ENTER'")
+        print("\nCorrija os dados inexistentes, salve o arquivo e pressione'ENTER'")
         os.system('PAUSE')
         print()
         main(origem)
@@ -115,11 +119,12 @@ def CPF_check(x, origem):
         count += 1
 
     if len(error) > 0:
-        print("CPF divergente para os seguintes brigadistas:")
+        print("CPF divergente para os seguintes brigadistas:\n")
 
         for i in error:
             print(x["Nome Completo:"][i])
 
+        print()
         print("Corrija os 'CPF's, salve o arquivo e tente novamente.")
         os.system('PAUSE')
         print()
@@ -129,43 +134,179 @@ def CPF_check(x, origem):
         print("Dados de CPF: Válido!")
         print("----------------------------------------")
 
-def date_check(x, origem):
+def email_check(x, origem):
+    count = 0
     error = []
+    for email in x["Endereço de e-mail:"]:
+        if str(email) == "nan":
+            pass
+        else:
+            conf = re.match("^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$", email)
+            if conf:
+                pass
+                #print("conferido", email)
+            else:
+                error.append(count)
+        count += 1
+    
+    if len(error) != 0:
+        print("E-mail divergente para os seguintes brigadistas:\n")
+
+        for i in error:
+            print(x["Nome Completo:"][i])
+
+        print("\nCaso o(a) brigadista não possua e-mail deixe o campo em branco.")
+        print("Corrija os 'E-mail's, salve o arquivo e tente novamente.")
+        print("-----------------------------------------------")
+        os.system('PAUSE')
+        print()
+        main(origem)
+
+    else:
+        print("Dados de E-mail: Válido!")
+        print("----------------------------------------")
+
+def date_check(x, origem):
+    hoje = dt.today()#.strftime('%Y%m%d')
     D = ['Data de Nascimento:','Data de Formatura do Treinamento:']
-    hoje = dt.today().strftime('%Y%m%d')
+    
     for i in D: #Formatação das datas
         x[i] = pd.to_datetime(x[i], errors='coerce')
-        x[i] = x[i].dt.strftime('%Y%m%d')
-    for i in range(0,len(x['Data de Nascimento:'])):
-        if int(hoje) - int(x['Data de Nascimento:'][i]) < 180000:
-            error.append(i)
-    if len(error) != 0:
-        print("\nData de nascimento divergente para os seguintes brigadistas:")
-        for i in error:
-            print(x["Nome Completo:"][i])
-        print("Corrija as datas de nacimento, salve o arquivo e tente novamente.")
-        os.system('PAUSE')
-        main(origem)
-        print()
-    else:
-        print("Data de Nascimento: Válido!")
-        print("----------------------------------------")
-    
+        error = []
+
+        if i == 'Data de Nascimento:':
+            count = 0
+            majority = []
+            for data in x[i]:
+                try:
+                    days = (hoje-data).days
+                    if days < 6570:
+                        majority.append(count)                        
+                except:
+                    error.append(count)
+                count += 1
+
+            if len(error) > 0:
+                print("Data de Nascimento inválida para os seguintes brigadistas:\n")
+                for j in error:
+                    print(x["Nome Completo:"][j])
+                print("--------------------------------------------------------------")
+            if len(majority) > 0:
+                print("Os seguintes brigadistas são menores de idade e devem ser removidos da lista:\n")
+                for j in majority:
+                    print(x["Nome Completo:"][j])
+                print("--------------------------------------------------------------")
+            if len(error) > 0 or len(majority) > 0:
+                print("Corrija as 'Datas de Nascimento', salve o arquivo e tente novamente.")
+                print("-----------------------------------------------")
+                os.system('PAUSE')
+                print()
+                main(origem)
+            else:
+                print("Datas de Nascimento: Válidas!")
+                print("-----------------------------------------------")
+        else:
+            count = 0
+            overdue = []
+            for data in x[i]:
+                try:
+                    days = (hoje-data).days
+                    if days > 365:
+                        overdue.append(count)
+                    if days < 0:
+                        overdue.append(count)
+                except:
+                    error.append(count)
+                count += 1
+
+            if len(error) > 0:
+                print("Data de Formatura do Treinamento inválida para os seguintes brigadistas:\n")
+                for j in error:
+                    print(x["Nome Completo:"][j])
+                print("--------------------------------------------------------------")
+            if len(overdue) > 0:
+                print("Treinamento vencido para os seguintes brigadistas:\n")
+                for j in overdue:
+                    print(x["Nome Completo:"][j])
+                print("--------------------------------------------------------------")
+            if len(error) > 0 or len(overdue) > 0:
+                print("Corrija as 'Datas de Formatura do Treinamento', salve o arquivo e tente novamente.")
+                print("-----------------------------------------------")
+                os.system('PAUSE')
+                print()
+                main(origem)
+            else:
+                print("Datas de Formatura do Treinamento: Válidas!")
+                print("-----------------------------------------------")
+
+def CEL_check(x, origem):
     error = []
-    for i in range(0,len(x['Data de Formatura do Treinamento:'])):
-        if 0 < (int(hoje) - int(x['Data de Formatura do Treinamento:'][i])) > 10000:
-            error.append(i)
+    count = 0
+    for TEL in x["Telefone Fixo:"]:
+        num = 0
+        for i in str(TEL):
+            try:
+                j = int(i)
+                num += 1
+            except:
+                pass
+        if num == 10 or num == 0:
+            pass
+        else:
+            error.append(count)
+        count += 1
+
     if len(error) != 0:
-        print("\nData de Formatura do Treinamento divergente para os seguintes brigadistas:")
+        print("-----------------------------------------------")
+        print("Telefone Fixo divergente para os seguintes brigadistas:\n")
+
         for i in error:
             print(x["Nome Completo:"][i])
-        print("Corrija as Datas de Formatura, salve o arquivo e tente novamente.")
+
+        
+        print("\nCaso o brigadista não possua telefone deixe o campo em branco")
+        print("Corrija os 'Telefones Fixos', salve o arquivo e tente novamente.")
+        print("-----------------------------------------------")
         os.system('PAUSE')
         print()
         main(origem)
+    
     else:
-        print("Data de Formatura do Treinamento: Válido!")
-        print("----------------------------------------")        
+        print("Telefones Fixos: Válidos!")
+        print("-----------------------------------------------")
+
+    count = 0
+    error = []
+    for CEL in x["Telefone Celular:"]:
+        num = 0
+        for i in str(CEL):
+            try:
+                j = int(i)
+                num += 1
+            except:
+                pass
+        if num == 11 or num == 0:
+            pass
+        else:
+            error.append(count)
+        count += 1
+
+    if len(error) != 0:
+        print("Telefone Celular divergente para os seguintes brigadistas:\n")
+
+        for i in error:
+            print(x["Nome Completo:"][i])
+
+        print("\nCaso o brigadista não possua Telefone Celular deixe o campo em branco")
+        print("Corrija os 'Telefones Celulares', salve o arquivo e tente novamente.")
+        print("-----------------------------------------------")
+        os.system('PAUSE')
+        print()
+        main(origem)
+
+    else:
+        print("Telefones Celulares: Válidos!")
+        print("-----------------------------------------------")
 
 def workload_check(x, origem):
     error = []
@@ -206,7 +347,7 @@ def replication_check(x, origem):
         "----------------------------------------"
         print("Os seguinte dados estão duplicados:", end = "\n\n")
         for i in duplicate:
-            print(i)
+            print(i, "\n")
             for j in duplicate[i]:
                 print(j)
             print()
@@ -226,13 +367,14 @@ def auto_fill(x):
         x[i] = pd.to_datetime(x[i], errors='coerce')
         x[i] = x[i].dt.strftime('%d%m%Y')
 
-    print("ATENÇÃO!!!!")
+    print("ATENÇÃO!!!!\n")
     print("A PRÓXIMA ETAPA PRECISA QUE:")
     print("O SITE DO BOMBEIRO ESTEJA ABERTO NA PRIMEIRA ABA DO 'ALT' + 'TAB'")
     print("ESTEJA CADASTRADO EXATAMENTE UM INSTRUTOR")
     print("NENHUM BOTÃO ESTEJA SELECIONADO")
-    print("CERTIFIQUE-SE QUE OS ITENS ACIMA FORAM CUMPRIDOS E DIGITE 'ENTER'")
+    print("CERTIFIQUE-SE QUE OS ITENS ACIMA FORAM CUMPRIDOS E DIGITE 'ENTER'\n")
     os.system('PAUSE')
+    
     name = ['CPF:',
         'Nome Completo:',
         'Data de Nascimento:',
